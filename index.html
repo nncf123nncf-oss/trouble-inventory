@@ -70,6 +70,9 @@
   .heavy input { width: 22px; height: 22px; margin: 0; accent-color: var(--accent); }
   .task .wk { font-size: 15px; font-weight: 800; color: var(--accent); }
   .task .cname { margin: 0 0 6px; }
+  .rownote { font-size: 15px; color: var(--ink2); border-left: 4px solid var(--accent); padding: 2px 0 2px 8px; margin: 6px 0 0; }
+  .cnt { font-size: 14px; color: var(--ink3); margin: 2px 0 0; }
+  .cnt:empty { display: none; }
   /* できあがり */
   .waiting { color: var(--ink3); font-size: 15px; }
   .rank { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 10px; }
@@ -87,7 +90,7 @@
   .tools a:hover { background: var(--accent-soft); }
   .notool { font-size: 15px; color: var(--ink3); margin: 6px 0 0; }
   .subh { font-size: 15px; font-weight: 800; color: var(--ink2); margin: 6px 0 2px; }
-  .out textarea { font-size: 15px; line-height: 1.7; }
+  .out textarea { font-size: 16px; line-height: 1.7; }
   .mw-footer { box-sizing: border-box; width: 100%; max-width: 100%; margin: 24px 0 0; padding: 16px; background: #F7F7F8;
     border: 1px solid #D8D8DC; border-radius: 6px; color: #3A3A3E; font-family: system-ui, sans-serif; font-size: 12px; line-height: 1.7; }
   .mw-footer p { margin: 0 0 6px; } .mw-footer p:last-child { margin-bottom: 0; } .mw-footer a { color: #0B5AA6; display: inline-block; padding: 13px 0; }
@@ -102,7 +105,7 @@
   <h1>困りごとの棚卸し</h1>
   <p class="lead">いつもの作業の回数と時間を選ぶと、時間をとられている作業トップ3と、そのまま送れる相談の文ができます。</p>
   <div class="notice">
-    <p>時間は、選んだ回数と時間をかけ合わせた<strong>目安</strong>です（週に「1〜2回」は1.5回、「3〜5回」は4回、「ほぼ毎日」は6回、「1日に何度も」は15回として数えます）。</p>
+    <p>時間は、選んだ回数と時間をかけ合わせた<strong>目安</strong>です（週に「1〜2回」は1.5回、「3〜5回」は4回、「ほぼ毎日」は6回、「1日に何度も」は15回、1回の時間の「2時間以上」は2時間として数えます）。</p>
     <p>入力した内容は、この端末のブラウザの中だけで扱い、どこにも送信しません。</p>
   </div>
   <div class="layout">
@@ -149,7 +152,7 @@
   <footer class="mw-footer">
     <p>みちAIワークス（MICHI AI WORKS）／代表 田中　泉</p>
     <p>運営: <a href="https://michi-portfolio.vercel.app/" rel="noopener">みちAIワークス 公式サイト</a>（https://michi-portfolio.vercel.app/ ）／ お問い合わせ: <a href="mailto:nncf123nncf@gmail.com">nncf123nncf@gmail.com</a></p>
-    <p>入力した内容は、お使いの端末のブラウザの中だけで扱い、当サイトには送信しません。入力は、この端末のブラウザにだけ下書きとして保存します。相談のフォームは、ボタンを押してご自身で開いたときだけ使われます（相談の文はフォームに自動では入りません）。時間は選んだ回数と時間からの目安で、実際の作業時間を測るものではありません。アクセス解析（Cloudflare Web Analytics）で、ページの閲覧状況（閲覧数・参照元・ブラウザの種類など）を計測しています。</p>
+    <p>入力した内容は、お使いの端末のブラウザの中だけで扱い、当サイトには送信しません。入力は、この端末のブラウザにだけ下書きとして保存します。相談のフォームは、ボタンを押してご自身で開いたときだけ使われます（相談の文がフォームに入るのは、ご自身で貼り付けたときだけです）。時間は選んだ回数と時間からの目安で、実際の作業時間を測るものではありません。アクセス解析（Cloudflare Web Analytics）で、ページの閲覧状況（閲覧数・参照元・ブラウザの種類など）を計測しています。</p>
     <p>ログイン・会員登録・パスワードの入力を求めることはありません。</p>
   </footer>
 </main>
@@ -181,7 +184,7 @@ var TI = (function () {
   ];
   // 100日で作った道具（名前は day-registry.json の product_name）
   var DAYS = {
-    1: '優先度つきTodoアプリ', 2: 'SNS下書きメーカー', 3: 'FAQ返信集', 4: '予約チェック', 5: '入金待ち一覧', 8: '見積チェック',
+    1: '優先度つきTodoアプリ', 15: '定型文スニペット帳', 27: 'SNS告知画像メーカー', 34: 'メニュー表メーカー', 2: 'SNS下書きメーカー', 3: 'FAQ返信集', 4: '予約チェック', 5: '入金待ち一覧', 8: '見積チェック',
     20: '画像リサイズツール', 22: '源泉徴収計算機', 23: '日程調整メール文メーカー', 24: '値札・プライスカード印刷メーカー', 28: '締切カウントダウンボード',
     29: '利益率計算機', 32: '定休日お知らせ画像メーカー', 33: 'シフト時間集計ツール', 43: '宅配サイズ判定ツール', 45: 'キャンペーン告知セット',
     48: '予約空き状況ボード', 49: 'インスタ分割画像メーカー', 50: '賞状・修了証メーカー', 51: '商品写真POPカードメーカー', 55: '予約注文まとめ表',
@@ -191,20 +194,20 @@ var TI = (function () {
   };
   var ALL = ['salon', 'lesson', 'food', 'shop', 'solo'];
   var TASKS = [
-    { id: 'yoyaku', name: '予約の受付・変更のやりとり', ind: ['salon', 'lesson', 'food'], days: [4, 48, 77] },
+    { id: 'yoyaku', name: '予約の受付・変更のやりとり', ind: ['salon', 'lesson', 'food'], days: [48, 77, 4] },
     { id: 'price', name: '「いくらですか？」への返事', ind: ALL, days: [76] },
-    { id: 'reply', name: '問い合わせ・DMへの返信', ind: ALL, days: [3] },
+    { id: 'reply', name: '問い合わせ・DMへの返信', ind: ALL, days: [3, 15] },
     { id: 'cancel', name: 'キャンセル・お断りの連絡', ind: ALL, days: [59] },
     { id: 'nyukin', name: '入金の確認', ind: ALL, days: [5, 65] },
-    { id: 'invoice', name: '見積・請求書づくり', ind: ['shop', 'solo'], days: [8, 22] },
+    { id: 'invoice', name: '見積・請求書づくり', ind: ['shop', 'solo'], days: [8], indDays: { solo: [8, 22] } },
     { id: 'chumon', name: '予約注文・団体予約のまとめ', ind: ['food'], days: [55, 89] },
     { id: 'kaisuken', name: '回数券・チケットの残りの管理', ind: ['salon', 'lesson'], days: [86] },
     { id: 'nittei', name: '日程調整', ind: ['lesson', 'solo'], days: [23] },
     { id: 'snspost', name: 'SNSの投稿文を考える', ind: ALL, days: [2, 67] },
-    { id: 'oshirase', name: 'お知らせ画像を作る', ind: ALL, days: [32, 45, 90] },
+    { id: 'oshirase', name: 'お知らせ画像を作る', ind: ALL, days: [32, 45, 27, 90] },
     { id: 'photo', name: '写真の加工・サイズ合わせ', ind: ['salon', 'lesson', 'food', 'shop'], days: [20, 49] },
     { id: 'photook', name: 'お客さまの写真を載せてよいかの確認', ind: ['salon', 'lesson'], days: [87] },
-    { id: 'nefuda', name: '値札・POPづくり', ind: ['food', 'shop'], days: [24, 51] },
+    { id: 'nefuda', name: '値札・POPづくり', ind: ['food', 'shop'], days: [24, 51], indDays: { food: [34, 24, 51] } },
     { id: 'genka', name: '原価・利益の計算', ind: ['food', 'shop'], days: [61, 29] },
     { id: 'hasso', name: '発送の準備（サイズ・送り先の住所）', ind: ['shop'], days: [43, 80] },
     { id: 'shift', name: 'シフトの時間集計', ind: ['food'], days: [33] },
@@ -241,12 +244,13 @@ var TI = (function () {
     return '';
   }
   // 相談の文は句読点を使わない（本人決定 2026-11-06）。書いた文の末尾の句読点だけ外す
-  function stripEnd(s) { return s.replace(/[。、．，.,!！]+$/u, ''); }
+  function stripEnd(s) { return s.replace(/^今は\s*/u, '').replace(/[。、．，.,!！]+$/u, ''); }
 
   function find(arr, id) { for (var i = 0; i < arr.length; i++) if (arr[i].id === id) return arr[i]; return null; }
   function minutes(it) { var f = find(FREQ, it.freq), d = find(DUR, it.dur); return f && d ? f.n * d.m : 0; }
   // 15分単位で四捨五入して表示。丸めて0になるときは「15分未満」
   function fmt(min) {
+    if (min < 15) return '15分未満';
     var r = Math.round(min / 15) * 15;
     if (r <= 0) return '15分未満';
     var h = Math.floor(r / 60), m = r % 60;
@@ -265,7 +269,7 @@ var TI = (function () {
       var it = st.items[t.id] || emptyItem(), e = checkText(it.how, LIM.how, '今どうしているか');
       if (e) errs[t.id] = e;
       var min = minutes(it);
-      if (min > 0) list.push({ key: t.id, name: t.name, min: min, heavy: !!it.heavy, how: e ? '' : stripEnd(clean(it.how)), days: t.days, order: i, custom: false });
+      if (min > 0) list.push({ key: t.id, name: t.name, min: min, heavy: !!it.heavy, how: e ? '' : stripEnd(clean(it.how)), days: (t.indDays && t.indDays[ind.id]) || t.days, order: i, custom: false });
     });
     (st.customs || []).slice(0, LIM.custom).forEach(function (c, j) {
       var key = 'c' + j, name = clean(c.name), e = checkText(c.name, LIM.name, '作業の名前'), eh = checkText(c.how, LIM.how, '今どうしているか');
@@ -288,7 +292,7 @@ var TI = (function () {
       lines.push((i + 1) + '. ' + x.name + '（' + weekText(x.min) + '）');
       if (x.how) lines.push('   今は' + x.how);
     });
-    var heavy = a.list.filter(function (x) { return x.heavy; }).map(function (x) { return '「' + x.name + '」'; });
+    var heavy = a.list.filter(function (x) { return x.heavy; }).map(function (x) { return /^「/.test(x.name) ? '『' + x.name + '』' : '「' + x.name + '」'; });
     lines.push('');
     if (heavy.length) lines.push('とくに気が重いのは' + heavy.join('') + 'です');
     lines.push('このあたりを楽にする方法があれば知りたいです');
@@ -395,8 +399,10 @@ var TI = (function () {
     return h('div', null, [h('label', { for: id, text: label }), s]);
   }
   var rowRefs = {};
+  function countText(v, max) { var n = Array.from(TI.clean(v)).length; return n ? n + ' / ' + max + '字' + (n > max ? '（多すぎます）' : '') : ''; }
   function taskRow(key, it, nameNode, onRemove) {
-    var wk = h('span', { class: 'wk', 'aria-live': 'polite' });
+    var wk = h('span', { class: 'wk' });
+    var note = h('p', { class: 'rownote', text: '「1回の時間」は1回あたりです。1日の合計で考えているときは、回数を「ほぼ毎日」にして、1日の合計の時間を選んでください。' }); note.hidden = true;
     var hv = h('input', { type: 'checkbox', id: 'hv-' + key }); hv.checked = !!it.heavy;
     hv.addEventListener('change', function () { it.heavy = hv.checked; update(); });
     var li = h('li', { class: 'task' }, [
@@ -406,9 +412,10 @@ var TI = (function () {
         selectEl('du-' + key, '1回の時間', TI.DUR, it.dur, function (v) { it.dur = v; update(); })
       ]),
       h('div', { class: 'ft' }, [h('label', { class: 'heavy', for: 'hv-' + key }, [hv, '気が重い']), wk].concat(onRemove ? [onRemove] : [])),
+      note,
       h('p', { class: 'errmsg', id: 'er-' + key, role: 'alert' })
     ]);
-    rowRefs[key] = { li: li, wk: wk, it: it };
+    rowRefs[key] = { li: li, wk: wk, it: it, note: note };
     return li;
   }
   function renderTasks() {
@@ -427,10 +434,11 @@ var TI = (function () {
     state.customs.forEach(function (c, j) {
       var inp = h('input', { type: 'text', id: 'cn-' + j, maxlength: 40, autocomplete: 'off', placeholder: '例: 材料の買い出し' });
       inp.value = c.name || '';
-      inp.addEventListener('input', function () { c.name = inp.value; update(); });
+      var cnt = h('p', { class: 'cnt' }); cnt.textContent = countText(inp.value, TI.LIM.name);
+      inp.addEventListener('input', function () { c.name = inp.value; cnt.textContent = countText(inp.value, TI.LIM.name); update(); });
       var del = h('button', { type: 'button', class: 'danger-btn', text: '消す', 'aria-label': '足した作業' + (j + 1) + 'を消す' });
       del.addEventListener('click', function () { state.customs.splice(j, 1); renderCustoms(); update(); });
-      var nm = h('div', { class: 'cname' }, [h('label', { for: 'cn-' + j, class: 'tn', text: '足した作業' + (j + 1) + 'の名前' }), inp]);
+      var nm = h('div', { class: 'cname' }, [h('label', { for: 'cn-' + j, class: 'tn', text: '足した作業' + (j + 1) + 'の名前' }), inp, cnt]);
       ul.appendChild(taskRow('c' + j, c, nm, del));
       rowRefs['c' + j].input = inp;
     });
@@ -482,10 +490,12 @@ var TI = (function () {
   }
   // 「今どうしているか」はトップ3の欄で書く（入力中に順位の欄を作り直さないよう、フォーカスを保つ）
   function howInput(key, it) {
-    var id = 'how-' + key, inp = h('input', { type: 'text', id: id, maxlength: 80, autocomplete: 'off', placeholder: '例: LINEで1件ずつ返しています' });
+    var id = 'how-' + key, inp = h('textarea', { id: id, rows: 3, maxlength: 80, autocomplete: 'off', placeholder: '例: 毎回ゼロから作っています' }), cnt = h('p', { class: 'cnt', id: 'hc-' + key });
     inp.value = it.how || '';
-    inp.addEventListener('input', function () { it.how = inp.value; update(false, id); });
-    return h('div', null, [h('label', { class: 'f', for: id, text: '今どうしているか（任意・40字まで）' }), inp, h('p', { class: 'errmsg', id: 'he-' + key, role: 'alert' })]);
+    function count() { cnt.textContent = countText(inp.value, TI.LIM.how); }
+    count();
+    inp.addEventListener('input', function () { it.how = inp.value; count(); update(false, id); });
+    return h('div', null, [h('label', { class: 'f', for: id, text: '今どうしているか（任意・40字まで）' }), inp, cnt, h('p', { class: 'errmsg', id: 'he-' + key, role: 'alert' })]);
   }
   function rankItem(x, no) {
     return h('li', null, [
@@ -503,7 +513,8 @@ var TI = (function () {
     Object.keys(rowRefs).forEach(function (k) {
       var r = rowRefs[k], min = TI.minutes(r.it);
       r.li.classList.toggle('on', min > 0);
-      r.wk.textContent = min > 0 ? TI.weekText(min) : (r.it.freq || r.it.dur ? '回数と時間の両方を選んでください' : '');
+      r.wk.textContent = min > 0 ? TI.weekText(min) : (r.it.freq || r.it.dur ? '回数と時間の両方を選んでください' : r.it.heavy ? '回数と時間を選ぶと数えます' : '');
+      if (r.note) r.note.hidden = !(r.it.freq === 'fmany' && (r.it.dur === 'd60' || r.it.dur === 'd120'));
       var e = $('er-' + k); if (e) e.textContent = a.errs[k] && !/今どうしているか/.test(a.errs[k]) ? a.errs[k] : '';
       if (r.input) r.input.classList.toggle('bad', !!(a.errs[k] && !/今どうしているか/.test(a.errs[k])));
     });
@@ -533,8 +544,9 @@ var TI = (function () {
   function fitHeight(ta) { if (ta.offsetParent) { ta.style.height = 'auto'; ta.style.height = (ta.scrollHeight + 4) + 'px'; } }
 
   /* ---- コピー・共有・フォーム ---- */
+  // 先に execCommand を同期で試す（フォームの新しいタブが前に出ると、clipboard API が断られることがあるため）
   function copyText(text, done) {
-    function fallback() {
+    function syncCopy() {
       var ok = false;
       try {
         var ta = document.createElement('textarea');
@@ -543,11 +555,12 @@ var TI = (function () {
         document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, text.length);
         ok = document.execCommand('copy'); document.body.removeChild(ta);
       } catch (e) { ok = false; }
-      done(ok);
+      return ok;
     }
+    if (syncCopy()) { done(true); return; }
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      try { navigator.clipboard.writeText(text).then(function () { done(true); }, fallback); } catch (e) { fallback(); }
-    } else fallback();
+      try { navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); }); } catch (e) { done(false); }
+    } else done(false);
   }
   $('copyBtn').addEventListener('click', function () {
     var ta = $('consult'), msg = $('copyMsg');
@@ -574,7 +587,7 @@ var TI = (function () {
   window.addEventListener('storage', function (e) {
     if (e.key !== TI.KEY || e.newValue == null) return;
     if (e.newValue === TI.dumpState(state)) return;
-    var st = TI.loadState(e.newValue); if (st) setAll(st, true);
+    var st = TI.loadState(e.newValue); if (st) { storeBroken = false; noteStore(); setAll(st, true); }
   });
 
   renderInds(); renderTasks(); noteStore(); update(true);
