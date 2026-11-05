@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>困りごとの棚卸し</title>
+<meta name="description" content="いつもの作業の回数と時間を選ぶと、時間をとられている作業トップ3と、そのまま送れる相談の文ができます。入力はこの端末のブラウザの中だけで扱います。">
+<style>
+  :root {
+    --bg: #f4f5f0; --surface: #ffffff; --ink: #1e2414; --ink2: #3a4230; --ink3: #535c47;
+    --line: #d9ddd0; --line-strong: #737d62; --accent: #5b6b2f; --accent-ink: #ffffff; --accent-soft: #edf1e2;
+    --danger: #a8231b; --danger-soft: #fbe9e7; --notice: #eef1e6;
+    --font: "Hiragino Sans","Yu Gothic","BIZ UDPGothic","Noto Sans JP",system-ui,sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #13160e; --surface: #1c2015; --ink: #f0f3e8; --ink2: #d4dac8; --ink3: #b7bfa8;
+      --line: #333a28; --line-strong: #8c9877; --accent: #b9c78a; --accent-ink: #1a1f0e; --accent-soft: #2a3220;
+      --danger: #ff9a92; --danger-soft: #3a1f1c; --notice: #232918;
+    }
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 16px; line-height: 1.6; }
+  main { max-width: 1100px; margin: 0 auto; padding: 16px 16px 32px; }
+  h1 { font-size: 22px; line-height: 1.3; margin: 8px 0 8px; overflow-wrap: anywhere; }
+  h2 { font-size: 18px; line-height: 1.4; margin: 0 0 10px; overflow-wrap: anywhere; }
+  h3 { font-size: 16px; line-height: 1.4; margin: 0 0 8px; }
+  p { margin: 0 0 10px; }
+  .lead { color: var(--ink2); }
+  .small { font-size: 16px; color: var(--ink3); }
+  .hint { font-weight: 400; color: var(--ink3); font-size: 14px; }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px; margin-bottom: 14px; min-width: 0; }
+  .notice { background: var(--notice); border: 1px solid var(--line-strong); border-left: 6px solid var(--accent); border-radius: 6px; padding: 10px 12px; margin: 0 0 14px; font-size: 16px; color: var(--ink2); }
+  .notice p:last-child { margin: 0; }
+  input[type=text], select, textarea {
+    display: block; width: 100%; max-width: 100%; min-width: 0; min-height: 44px; font: inherit; font-size: 16px; color: var(--ink); background: var(--surface);
+    border: 1px solid var(--line-strong); border-radius: 6px; padding: 8px 10px; margin: 0; }
+  input[type=text], textarea { -webkit-appearance: none; appearance: none; }
+  textarea { resize: vertical; }
+  input.bad { border: 2px solid var(--danger); }
+  input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  button, a.btn { font: inherit; font-size: 16px; min-height: 44px; min-width: 44px; padding: 8px 14px; border-radius: 6px; border: 1px solid var(--line-strong);
+    background: var(--surface); color: var(--ink); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; text-align: center; text-decoration: none; }
+  button.primary, a.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .btns { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 10px; }
+  .danger-btn { color: var(--danger); border-color: var(--danger); }
+  .confirm { border: 2px solid var(--danger); background: var(--danger-soft); border-radius: 8px; padding: 10px 12px; margin: 0 0 10px; }
+  .okmsg { color: var(--ink2); font-weight: 600; font-size: 15px; }
+  .errmsg { color: var(--danger); font-weight: 700; font-size: 15px; margin: 4px 0 0; }
+  .errmsg:empty { display: none; }
+  /* 業種 */
+  .inds { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; margin: 0 0 12px; }
+  .choice { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 8px 12px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); cursor: pointer; }
+  .choice input { width: 22px; height: 22px; margin: 0; flex: none; accent-color: var(--accent); }
+  .choice .ct { flex: 1; min-width: 0; overflow-wrap: anywhere; line-height: 1.4; }
+  .choice.on { border: 2px solid var(--accent); background: var(--accent-soft); padding: 7px 11px; }
+  .choice.on .ct { font-weight: 800; }
+  /* 作業の行 */
+  .tasks { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 8px; }
+  .task { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: var(--surface); }
+  .task.on { border: 2px solid var(--accent); padding: 7px 9px; background: var(--accent-soft); }
+  .task .tn { font-weight: 700; margin: 0 0 6px; overflow-wrap: anywhere; line-height: 1.4; }
+  .task .sel { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px; margin: 0 0 6px; }
+  .task .sel label { display: block; font-size: 14px; font-weight: 700; color: var(--ink3); margin: 0 0 2px; }
+  .task .ft { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+  .heavy { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; cursor: pointer; font-weight: 600; }
+  .heavy input { width: 22px; height: 22px; margin: 0; accent-color: var(--accent); }
+  .task .wk { font-size: 15px; font-weight: 800; color: var(--accent); }
+  .task .cname { margin: 0 0 6px; }
+  /* できあがり */
+  .waiting { color: var(--ink3); font-size: 15px; }
+  .rank { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 10px; }
+  .rank > li { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; background: var(--surface); }
+  .rank .rt { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 10px; align-items: baseline; margin: 0 0 6px; }
+  .rank .rt .tm { grid-column: 2; }
+  .rank .no { font-weight: 800; font-size: 20px; color: var(--accent); min-width: 1.6em; }
+  .rank .nm { min-width: 0; font-weight: 800; overflow-wrap: anywhere; line-height: 1.4; }
+  .rank .tm { font-weight: 800; color: var(--accent); }
+  .rank .hv { display: inline-block; font-size: 14px; font-weight: 700; color: var(--ink2); border: 1px solid var(--line-strong); border-radius: 999px; padding: 0 8px; margin: 0 0 6px; }
+  .rank label.f { display: block; font-size: 14px; font-weight: 700; color: var(--ink3); margin: 6px 0 2px; }
+  .tools { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 6px; }
+  .tools a { display: flex; align-items: center; min-height: 44px; padding: 6px 10px; border: 1px solid var(--line-strong); border-radius: 6px; color: var(--ink); text-decoration: none; background: var(--surface); overflow-wrap: anywhere; line-height: 1.4; }
+  .tools a .d { font-weight: 800; color: var(--accent); margin-right: 8px; white-space: nowrap; }
+  .tools a:hover { background: var(--accent-soft); }
+  .notool { font-size: 15px; color: var(--ink3); margin: 6px 0 0; }
+  .subh { font-size: 15px; font-weight: 800; color: var(--ink2); margin: 6px 0 2px; }
+  .out textarea { font-size: 15px; line-height: 1.7; }
+  .mw-footer { box-sizing: border-box; width: 100%; max-width: 100%; margin: 24px 0 0; padding: 16px; background: #F7F7F8;
+    border: 1px solid #D8D8DC; border-radius: 6px; color: #3A3A3E; font-family: system-ui, sans-serif; font-size: 12px; line-height: 1.7; }
+  .mw-footer p { margin: 0 0 6px; } .mw-footer p:last-child { margin-bottom: 0; } .mw-footer a { color: #0B5AA6; display: inline-block; padding: 13px 0; }
+  @media (min-width: 600px) { .inds { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+  @media (min-width: 960px) {
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>困りごとの棚卸し</h1>
+  <p class="lead">いつもの作業の回数と時間を選ぶと、時間をとられている作業トップ3と、そのまま送れる相談の文ができます。</p>
+  <div class="notice">
+    <p>時間は、選んだ回数と時間をかけ合わせた<strong>目安</strong>です（週に「1〜2回」は1.5回、「3〜5回」は4回、「ほぼ毎日」は6回、「1日に何度も」は15回として数えます）。</p>
+    <p>入力した内容は、この端末のブラウザの中だけで扱い、どこにも送信しません。</p>
+  </div>
+  <div class="layout">
+    <section class="panel" id="inSec" aria-labelledby="inH">
+      <h2 id="inH">選ぶ</h2>
+      <div class="btns"><button type="button" id="sampleA">見本を入れる（美容室）</button><button type="button" id="sampleB">見本を入れる（教室）</button></div>
+      <div id="confirmBox" class="confirm" hidden></div>
+      <h3 id="indH">お仕事の種類</h3>
+      <div class="inds" id="inds" role="radiogroup" aria-labelledby="indH"></div>
+      <div id="taskArea" hidden>
+        <h3>いつもの作業 <span class="hint">（やっている作業だけ、回数と時間を選んでください）</span></h3>
+        <ul class="tasks" id="tasks"></ul>
+        <h3>一覧にない作業 <span class="hint">（3つまで・20字まで）</span></h3>
+        <ul class="tasks" id="customs"></ul>
+        <div class="btns"><button type="button" id="addCustom">作業を足す</button></div>
+      </div>
+      <div class="btns"><button type="button" class="danger-btn" id="clearBtn">入力を消す</button></div>
+      <p class="small" id="storeNote">入力は、この端末のブラウザに下書きとして残ります。</p>
+    </section>
+    <section class="panel out" id="outSec" aria-labelledby="outH">
+      <h2 id="outH">できあがり</h2>
+      <p class="waiting" id="waiting">お仕事の種類を選んで、やっている作業の回数と時間を選ぶと、ここに出ます。</p>
+      <div id="outBody" hidden>
+        <h3>時間をとられている作業 <span class="hint">（週あたりの目安）</span></h3>
+        <ol class="rank" id="rank"></ol>
+        <div id="heavySec" hidden>
+          <h3>時間は短いけれど、気が重い作業</h3>
+          <ol class="rank" id="heavyList"></ol>
+        </div>
+        <h3>相談の文</h3>
+        <textarea id="consult" rows="12" readonly aria-label="相談の文"></textarea>
+        <div class="btns">
+          <button type="button" class="primary" id="copyBtn">コピー</button>
+          <button type="button" id="shareBtn" hidden>共有</button>
+        </div>
+        <p class="okmsg" id="copyMsg" role="status"></p>
+        <h3>困りごとを送ってみる</h3>
+        <p class="small">相談の文をコピーしてから、フォームを開きます。フォームに貼り付けて送ってください。ひとことで大丈夫です。ログインは要りません。</p>
+        <div class="btns"><a class="btn primary" id="formBtn" href="https://docs.google.com/forms/d/e/1FAIpQLSe_Kv8KQXaYAm-GKwJAABu0c_o7P5qQeF4wbcoR5yA1-riq8w/viewform" target="_blank" rel="noopener">文をコピーしてフォームを開く</a></div>
+        <p class="okmsg" id="formMsg" role="status"></p>
+      </div>
+    </section>
+  </div>
+  <footer class="mw-footer">
+    <p>みちAIワークス（MICHI AI WORKS）／代表 田中　泉</p>
+    <p>運営: <a href="https://michi-portfolio.vercel.app/" rel="noopener">みちAIワークス 公式サイト</a>（https://michi-portfolio.vercel.app/ ）／ お問い合わせ: <a href="mailto:nncf123nncf@gmail.com">nncf123nncf@gmail.com</a></p>
+    <p>入力した内容は、お使いの端末のブラウザの中だけで扱い、当サイトには送信しません。入力は、この端末のブラウザにだけ下書きとして保存します。相談のフォームは、ボタンを押してご自身で開いたときだけ使われます（相談の文はフォームに自動では入りません）。時間は選んだ回数と時間からの目安で、実際の作業時間を測るものではありません。アクセス解析（Cloudflare Web Analytics）で、ページの閲覧状況（閲覧数・参照元・ブラウザの種類など）を計測しています。</p>
+    <p>ログイン・会員登録・パスワードの入力を求めることはありません。</p>
+  </footer>
+</main>
+
+<script id="core">
+var TI = (function () {
+  var KEY = 'trouble-inventory-v1';
+  var LIM = { custom: 3, name: 20, how: 40 };
+  var SITE = 'https://100days.michiaiworks.com/day/';
+  var INDS = [
+    { id: 'salon', label: '美容室・サロン', say: '美容室・サロンをしています' },
+    { id: 'lesson', label: '教室・レッスン', say: '教室・レッスンをしています' },
+    { id: 'food', label: '飲食店・カフェ', say: '飲食店・カフェをしています' },
+    { id: 'shop', label: '物販・ハンドメイド', say: '物販・ハンドメイドのお店をしています' },
+    { id: 'solo', label: '個人の仕事（デザイン・士業・講師など）', say: '個人で仕事をしています' }
+  ];
+  var FREQ = [
+    { id: 'f12', label: '週1〜2回', n: 1.5 },
+    { id: 'f35', label: '週3〜5回', n: 4 },
+    { id: 'fday', label: 'ほぼ毎日', n: 6 },
+    { id: 'fmany', label: '1日に何度も', n: 15 }
+  ];
+  var DUR = [
+    { id: 'd5', label: '5分', m: 5 },
+    { id: 'd15', label: '15分', m: 15 },
+    { id: 'd30', label: '30分', m: 30 },
+    { id: 'd60', label: '1時間', m: 60 },
+    { id: 'd120', label: '2時間以上', m: 120 }
+  ];
+  // 100日で作った道具（名前は day-registry.json の product_name）
+  var DAYS = {
+    1: '優先度つきTodoアプリ', 2: 'SNS下書きメーカー', 3: 'FAQ返信集', 4: '予約チェック', 5: '入金待ち一覧', 8: '見積チェック',
+    20: '画像リサイズツール', 22: '源泉徴収計算機', 23: '日程調整メール文メーカー', 24: '値札・プライスカード印刷メーカー', 28: '締切カウントダウンボード',
+    29: '利益率計算機', 32: '定休日お知らせ画像メーカー', 33: 'シフト時間集計ツール', 43: '宅配サイズ判定ツール', 45: 'キャンペーン告知セット',
+    48: '予約空き状況ボード', 49: 'インスタ分割画像メーカー', 50: '賞状・修了証メーカー', 51: '商品写真POPカードメーカー', 55: '予約注文まとめ表',
+    59: 'キャンセル・お断り連絡文メーカー', 61: 'レシピ原価・仕入れ値連動ツール', 65: '入金チェック', 67: '投稿前チェック', 76: '料金の目安リンクメーカー',
+    77: '次回予約カレンダーリンク', 80: 'DMで届いた住所ばらし', 82: '売上CSVで今月をふり返るボード', 84: '紙のアンケートをめくって数える',
+    86: '回数券の残りリンク', 87: '写真の載せ方の希望リンク', 89: '団体予約の確認リンク', 90: '価格改定のお知らせセット'
+  };
+  var ALL = ['salon', 'lesson', 'food', 'shop', 'solo'];
+  var TASKS = [
+    { id: 'yoyaku', name: '予約の受付・変更のやりとり', ind: ['salon', 'lesson', 'food'], days: [4, 48, 77] },
+    { id: 'price', name: '「いくらですか？」への返事', ind: ALL, days: [76] },
+    { id: 'reply', name: '問い合わせ・DMへの返信', ind: ALL, days: [3] },
+    { id: 'cancel', name: 'キャンセル・お断りの連絡', ind: ALL, days: [59] },
+    { id: 'nyukin', name: '入金の確認', ind: ALL, days: [5, 65] },
+    { id: 'invoice', name: '見積・請求書づくり', ind: ['shop', 'solo'], days: [8, 22] },
+    { id: 'chumon', name: '予約注文・団体予約のまとめ', ind: ['food'], days: [55, 89] },
+    { id: 'kaisuken', name: '回数券・チケットの残りの管理', ind: ['salon', 'lesson'], days: [86] },
+    { id: 'nittei', name: '日程調整', ind: ['lesson', 'solo'], days: [23] },
+    { id: 'snspost', name: 'SNSの投稿文を考える', ind: ALL, days: [2, 67] },
+    { id: 'oshirase', name: 'お知らせ画像を作る', ind: ALL, days: [32, 45, 90] },
+    { id: 'photo', name: '写真の加工・サイズ合わせ', ind: ['salon', 'lesson', 'food', 'shop'], days: [20, 49] },
+    { id: 'photook', name: 'お客さまの写真を載せてよいかの確認', ind: ['salon', 'lesson'], days: [87] },
+    { id: 'nefuda', name: '値札・POPづくり', ind: ['food', 'shop'], days: [24, 51] },
+    { id: 'genka', name: '原価・利益の計算', ind: ['food', 'shop'], days: [61, 29] },
+    { id: 'hasso', name: '発送の準備（サイズ・送り先の住所）', ind: ['shop'], days: [43, 80] },
+    { id: 'shift', name: 'シフトの時間集計', ind: ['food'], days: [33] },
+    { id: 'enquete', name: 'アンケート・感想の集計', ind: ['lesson'], days: [84] },
+    { id: 'shiryou', name: '教材・資料づくり', ind: ['lesson', 'solo'], days: [] },
+    { id: 'shuryo', name: '修了証・賞状づくり', ind: ['lesson'], days: [50] },
+    { id: 'kokyaku', name: 'お客さまごとのメモ（カルテ）', ind: ['salon'], days: [] },
+    { id: 'zaiko', name: '在庫・材料の確認と発注', ind: ['salon', 'food', 'shop'], days: [] },
+    { id: 'shime', name: '締切・やることの整理', ind: ['solo'], days: [1, 28] },
+    { id: 'uriage', name: '売上の集計・ふり返り', ind: ALL, days: [82] }
+  ];
+
+  var RE_CTRL = new RegExp('[' + String.fromCharCode(0) + '-' + String.fromCharCode(0x1f) + String.fromCharCode(0x7f) + '-' + String.fromCharCode(0x9f) + String.fromCharCode(0x2028, 0x2029) + ']+', 'g');
+  var RE_INVISIBLE = new RegExp('(?!' + String.fromCharCode(0x200d) + ')[\\p{Cf}' + String.fromCharCode(0x3164, 0x115f, 0x1160, 0xffa0) + ']', 'gu');
+  function clean(s) { return String(s == null ? '' : s).replace(RE_CTRL, ' ').replace(RE_INVISIBLE, '').replace(/\s+/g, ' ').trim(); }
+  function cpLen(s) { return Array.from(s).length; }
+  // リンク・メールアドレス・電話番号らしい並びは止める（相談の文に意図しない連絡先が入らないように。Day090の規則を流用）
+  var TLD = '(?:com|net|org|jp|me|io|co|info|biz|xyz|app|dev|link|page|shop|site|online|tokyo|ly|gl|to|cc|tv|us|uk|ne|or|ac|go|ee|gle|be|gd|ai|fm|in|so|top|cn|ru|kr|tw|hk|ws|gg|sh|im|is|li|la|vip|club|live|work|fun|icu)';
+  var RE_DOMAIN = new RegExp('[^\\s.]+\\.' + TLD + '(?![a-z])');
+  function blockedReason(s) {
+    var n = String(s).normalize('NFKC').toLowerCase(), compact = n.replace(/\s/g, '');
+    var dotted = compact.replace(/ドット|どっと|\(dot\)|\[dot\]|dot/g, '.');
+    if (/https?|:\/\/|www\.|tel:|mailto:/.test(compact) || RE_DOMAIN.test(n) || RE_DOMAIN.test(dotted)) return 'リンク';
+    if (/[a-z0-9._%+\-]@[a-z0-9\-]/.test(compact)) return 'メールアドレス';
+    var runs = n.match(/\d[\d\s().\/_\-ー‐−・、]*\d/g) || [];
+    for (var i = 0; i < runs.length; i++) if (runs[i].replace(/\D/g, '').length >= 7) return '7桁以上の数字（電話番号など）';
+    return '';
+  }
+  // 文字欄の確認。問題がなければ ''、あれば理由の文
+  function checkText(v, max, what) {
+    var t = clean(v), b;
+    if (cpLen(t) > max) return what + 'は' + max + '字までです（今' + cpLen(t) + '字）。';
+    if (t && (b = blockedReason(t))) return what + 'に' + b + 'は入れられません。';
+    return '';
+  }
+  // 相談の文は句読点を使わない（本人決定 2026-11-06）。書いた文の末尾の句読点だけ外す
+  function stripEnd(s) { return s.replace(/[。、．，.,!！]+$/u, ''); }
+
+  function find(arr, id) { for (var i = 0; i < arr.length; i++) if (arr[i].id === id) return arr[i]; return null; }
+  function minutes(it) { var f = find(FREQ, it.freq), d = find(DUR, it.dur); return f && d ? f.n * d.m : 0; }
+  // 15分単位で四捨五入して表示。丸めて0になるときは「15分未満」
+  function fmt(min) {
+    var r = Math.round(min / 15) * 15;
+    if (r <= 0) return '15分未満';
+    var h = Math.floor(r / 60), m = r % 60;
+    return '約' + (h ? h + '時間' : '') + (m ? m + '分' : '');
+  }
+  function weekText(min) { var t = fmt(min); return t === '15分未満' ? '週に15分未満' : '週に' + t; }
+  function tasksFor(ind) { return TASKS.filter(function (t) { return t.ind.indexOf(ind) >= 0; }); }
+  function emptyItem() { return { freq: '', dur: '', heavy: false, how: '' }; }
+  function emptyState() { return { ind: '', items: {}, customs: [] }; }
+
+  // 入力から、数えられる作業の一覧と順位を作る
+  function analyze(st) {
+    var errs = {}, list = [], ind = find(INDS, st.ind);
+    if (!ind) return { ind: null, errs: errs, list: [], top: [], heavyOthers: [] };
+    tasksFor(ind.id).forEach(function (t, i) {
+      var it = st.items[t.id] || emptyItem(), e = checkText(it.how, LIM.how, '今どうしているか');
+      if (e) errs[t.id] = e;
+      var min = minutes(it);
+      if (min > 0) list.push({ key: t.id, name: t.name, min: min, heavy: !!it.heavy, how: e ? '' : stripEnd(clean(it.how)), days: t.days, order: i, custom: false });
+    });
+    (st.customs || []).slice(0, LIM.custom).forEach(function (c, j) {
+      var key = 'c' + j, name = clean(c.name), e = checkText(c.name, LIM.name, '作業の名前'), eh = checkText(c.how, LIM.how, '今どうしているか');
+      if (e) errs[key] = e; else if (eh) errs[key] = eh;
+      var min = minutes(c);
+      if (min > 0 && !name) errs[key] = errs[key] || '作業の名前を入れてください。';
+      if (min > 0 && name && !e) list.push({ key: key, name: name, min: min, heavy: !!c.heavy, how: eh ? '' : stripEnd(clean(c.how)), days: [], order: 100 + j, custom: true });
+    });
+    // 順位: 週あたりの時間（丸める前）→ 気が重い → 一覧の順
+    list.sort(function (a, b) { return b.min - a.min || (b.heavy - a.heavy) || a.order - b.order; });
+    var top = list.slice(0, 3), heavyOthers = list.slice(3).filter(function (x) { return x.heavy; });
+    return { ind: ind, errs: errs, list: list, top: top, heavyOthers: heavyOthers };
+  }
+
+  function consultText(a) {
+    if (!a.ind || !a.top.length) return '';
+    var n = a.top.length, lines = [a.ind.say];
+    lines.push(n === 1 ? 'いま時間がかかっているのは次の作業です' : 'いま時間がかかっているのは次の' + ['', '', '2つ', '3つ'][n] + 'です', '');
+    a.top.forEach(function (x, i) {
+      lines.push((i + 1) + '. ' + x.name + '（' + weekText(x.min) + '）');
+      if (x.how) lines.push('   今は' + x.how);
+    });
+    var heavy = a.list.filter(function (x) { return x.heavy; }).map(function (x) { return '「' + x.name + '」'; });
+    lines.push('');
+    if (heavy.length) lines.push('とくに気が重いのは' + heavy.join('') + 'です');
+    lines.push('このあたりを楽にする方法があれば知りたいです');
+    return lines.join('\n');
+  }
+  function toolsOf(x) { return (x.days || []).filter(function (d) { return DAYS[d]; }).map(function (d) { var s = String(d); while (s.length < 3) s = '0' + s; return { day: s, name: DAYS[d], url: SITE + s + '/' }; }); }
+
+  function isIOS(ua, platform, touchPoints) { return /iPhone|iPad|iPod/.test(ua || '') || (platform === 'MacIntel' && (touchPoints || 0) > 1); }
+
+  function loadState(raw) {
+    var o; try { o = JSON.parse(raw); } catch (e) { return null; }
+    if (!o || typeof o !== 'object' || o.v !== 1 || !o.s || typeof o.s !== 'object') return null;
+    var s = o.s, st = emptyState();
+    function str(v, max) { return typeof v === 'string' ? Array.from(v).slice(0, max).join('') : ''; }
+    function item(r) { r = r && typeof r === 'object' ? r : {}; return { freq: find(FREQ, r.freq) ? r.freq : '', dur: find(DUR, r.dur) ? r.dur : '', heavy: r.heavy === true, how: str(r.how, 80) }; }
+    st.ind = find(INDS, s.ind) ? s.ind : '';
+    if (s.items && typeof s.items === 'object') TASKS.forEach(function (t) { if (s.items[t.id]) st.items[t.id] = item(s.items[t.id]); });
+    if (s.customs != null && !Array.isArray(s.customs)) return null;
+    st.customs = (s.customs || []).slice(0, LIM.custom).map(function (c) { var it = item(c); it.name = str(c && c.name, 40); return it; });
+    return st;
+  }
+  function dumpState(st) { return JSON.stringify({ v: 1, s: st }); }
+
+  return {
+    KEY: KEY, LIM: LIM, INDS: INDS, FREQ: FREQ, DUR: DUR, TASKS: TASKS, DAYS: DAYS,
+    clean: clean, blockedReason: blockedReason, checkText: checkText, minutes: minutes, fmt: fmt, weekText: weekText,
+    tasksFor: tasksFor, emptyItem: emptyItem, emptyState: emptyState, analyze: analyze, consultText: consultText, toolsOf: toolsOf,
+    isIOS: isIOS, loadState: loadState, dumpState: dumpState
+  };
+})();
+</script>
+
+<script id="ui">
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  function h(tag, attrs, kids) {
+    var e = document.createElement(tag);
+    if (attrs) Object.keys(attrs).forEach(function (k) {
+      if (k === 'text') e.textContent = attrs[k];
+      else if (k === 'class') e.className = attrs[k];
+      else if (attrs[k] === true) e.setAttribute(k, '');
+      else if (attrs[k] != null && attrs[k] !== false) e.setAttribute(k, attrs[k]);
+    });
+    (kids || []).forEach(function (c) { if (c != null) e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); });
+    return e;
+  }
+
+  // 見本（すべて架空）
+  var SAMPLES = {
+    A: { ind: 'salon', items: {
+      yoyaku: { freq: 'fmany', dur: 'd15', heavy: true, how: 'LINEで1件ずつ返しています' },
+      price: { freq: 'fday', dur: 'd15' }, oshirase: { freq: 'f12', dur: 'd60' },
+      photo: { freq: 'f35', dur: 'd15' }, nyukin: { freq: 'f35', dur: 'd5', heavy: true } } },
+    B: { ind: 'lesson', items: {
+      nittei: { freq: 'f35', dur: 'd30', how: 'メールで候補日を出して往復しています' }, reply: { freq: 'fday', dur: 'd15' },
+      enquete: { freq: 'f12', dur: 'd60', heavy: true, how: '紙を1枚ずつ見て数えています' },
+      kaisuken: { freq: 'f35', dur: 'd15', heavy: true }, shiryou: { freq: 'f12', dur: 'd30' } } }
+  };
+
+  /* ---- 下書きの保存（Day090と同じ形） ---- */
+  var storeOk = true, storeBroken = false;
+  function readStore() {
+    var raw = null;
+    try { raw = localStorage.getItem(TI.KEY); } catch (e) { storeOk = false; return null; }
+    if (raw == null) return null;
+    var st = TI.loadState(raw);
+    if (!st) {
+      storeBroken = true;
+      try { localStorage.setItem(TI.KEY + '-backup', raw); } catch (e) { storeOk = false; }
+    }
+    return st;
+  }
+  function writeStore() {
+    if (!storeOk) return;
+    try { localStorage.setItem(TI.KEY, TI.dumpState(state)); storeBroken = false; } catch (e) { storeOk = false; }
+    noteStore();
+  }
+  function noteStore() {
+    var n = $('storeNote');
+    if (!storeOk) n.textContent = 'このブラウザでは下書きを残せません（プライベートブラウズなど）。使うことはできます。';
+    else if (storeBroken) n.textContent = '前の下書きが読み取れませんでした。読み取れなかった下書きは別に残してあります。入力を始めると、新しい下書きとして残ります。';
+    else n.textContent = '入力は、この端末のブラウザに下書きとして残ります。';
+  }
+  var state = readStore() || TI.emptyState();
+  function item(id) { if (!state.items[id]) state.items[id] = TI.emptyItem(); return state.items[id]; }
+
+  /* ---- 業種 ---- */
+  function renderInds() {
+    var box = $('inds'); box.textContent = '';
+    TI.INDS.forEach(function (x) {
+      var on = state.ind === x.id, inp = h('input', { type: 'radio', name: 'ind', value: x.id }); inp.checked = on;
+      inp.addEventListener('change', function () { state.ind = x.id; renderInds(); renderTasks(); update(); });
+      box.appendChild(h('label', { class: 'choice' + (on ? ' on' : '') }, [inp, h('span', { class: 'ct', text: x.label })]));
+    });
+  }
+
+  /* ---- 作業の行 ---- */
+  function selectEl(id, label, opts, value, onchange) {
+    var s = h('select', { id: id });
+    s.appendChild(h('option', { value: '', text: '選ぶ' }));
+    opts.forEach(function (o) { var op = h('option', { value: o.id, text: o.label }); s.appendChild(op); });
+    s.value = value || '';
+    s.addEventListener('change', function () { onchange(s.value); });
+    return h('div', null, [h('label', { for: id, text: label }), s]);
+  }
+  var rowRefs = {};
+  function taskRow(key, it, nameNode, onRemove) {
+    var wk = h('span', { class: 'wk', 'aria-live': 'polite' });
+    var hv = h('input', { type: 'checkbox', id: 'hv-' + key }); hv.checked = !!it.heavy;
+    hv.addEventListener('change', function () { it.heavy = hv.checked; update(); });
+    var li = h('li', { class: 'task' }, [
+      nameNode,
+      h('div', { class: 'sel' }, [
+        selectEl('fq-' + key, '回数', TI.FREQ, it.freq, function (v) { it.freq = v; update(); }),
+        selectEl('du-' + key, '1回の時間', TI.DUR, it.dur, function (v) { it.dur = v; update(); })
+      ]),
+      h('div', { class: 'ft' }, [h('label', { class: 'heavy', for: 'hv-' + key }, [hv, '気が重い']), wk].concat(onRemove ? [onRemove] : [])),
+      h('p', { class: 'errmsg', id: 'er-' + key, role: 'alert' })
+    ]);
+    rowRefs[key] = { li: li, wk: wk, it: it };
+    return li;
+  }
+  function renderTasks() {
+    rowRefs = {};
+    $('taskArea').hidden = !state.ind;
+    var ul = $('tasks'); ul.textContent = '';
+    if (!state.ind) return;
+    TI.tasksFor(state.ind).forEach(function (t) {
+      ul.appendChild(taskRow(t.id, item(t.id), h('p', { class: 'tn', text: t.name })));
+    });
+    renderCustoms();
+  }
+  function renderCustoms() {
+    var ul = $('customs'); ul.textContent = '';
+    Object.keys(rowRefs).forEach(function (k) { if (/^c\d$/.test(k)) delete rowRefs[k]; });
+    state.customs.forEach(function (c, j) {
+      var inp = h('input', { type: 'text', id: 'cn-' + j, maxlength: 40, autocomplete: 'off', placeholder: '例: 材料の買い出し' });
+      inp.value = c.name || '';
+      inp.addEventListener('input', function () { c.name = inp.value; update(); });
+      var del = h('button', { type: 'button', class: 'danger-btn', text: '消す', 'aria-label': '足した作業' + (j + 1) + 'を消す' });
+      del.addEventListener('click', function () { state.customs.splice(j, 1); renderCustoms(); update(); });
+      var nm = h('div', { class: 'cname' }, [h('label', { for: 'cn-' + j, class: 'tn', text: '足した作業' + (j + 1) + 'の名前' }), inp]);
+      ul.appendChild(taskRow('c' + j, c, nm, del));
+      rowRefs['c' + j].input = inp;
+    });
+    $('addCustom').disabled = state.customs.length >= TI.LIM.custom;
+  }
+  $('addCustom').addEventListener('click', function () {
+    if (state.customs.length >= TI.LIM.custom) return;
+    var c = TI.emptyItem(); c.name = ''; state.customs.push(c); renderCustoms(); update();
+    $('cn-' + (state.customs.length - 1)).focus();
+  });
+
+  /* ---- 見本・入力を消す ---- */
+  function hasInput() {
+    if (state.customs.length) return true;
+    return Object.keys(state.items).some(function (k) { var it = state.items[k]; return it.freq || it.dur || it.heavy || TI.clean(it.how); });
+  }
+  function askThen(text, okLabel, fn) {
+    var box = $('confirmBox'); box.textContent = '';
+    var ok = h('button', { type: 'button', class: 'primary', text: okLabel }), no = h('button', { type: 'button', text: 'やめる' });
+    ok.addEventListener('click', function () { box.hidden = true; fn(); });
+    no.addEventListener('click', function () { box.hidden = true; });
+    box.appendChild(h('p', { text: text })); box.appendChild(h('div', { class: 'btns' }, [ok, no]));
+    box.hidden = false; ok.focus();
+  }
+  function setAll(st, noSave) { state = st; renderInds(); renderTasks(); update(noSave === true); }
+  function useSample(key) {
+    var s = SAMPLES[key], st = TI.emptyState();
+    st.ind = s.ind;
+    Object.keys(s.items).forEach(function (id) { var x = s.items[id]; st.items[id] = { freq: x.freq, dur: x.dur, heavy: !!x.heavy, how: x.how || '' }; });
+    if (hasInput()) askThen('入力中の内容を、見本（架空の例）に置き換えます。よろしいですか。', '見本に置き換える', function () { setAll(st); });
+    else setAll(st);
+  }
+  $('sampleA').addEventListener('click', function () { useSample('A'); });
+  $('sampleB').addEventListener('click', function () { useSample('B'); });
+  $('clearBtn').addEventListener('click', function () { askThen('入力をすべて消します。よろしいですか。', '入力を消す', function () { setAll(TI.emptyState()); }); });
+
+  /* ---- できあがり ---- */
+  function toolList(x) {
+    var tools = TI.toolsOf(x);
+    if (!tools.length) return h('p', { class: 'notool', text: x.custom ? '足した作業なので、近い道具の案内はありません。' : '100日で作った道具の中には、まだ近いものがありません。' });
+    return h('div', null, [h('p', { class: 'subh', text: '近いかもしれない道具（100日で作ったもの）' }),
+      h('ul', { class: 'tools' }, tools.map(function (t) {
+        return h('li', null, [h('a', { href: t.url, target: '_blank', rel: 'noopener' }, [h('span', { class: 'd', text: 'Day' + t.day }), t.name])]);
+      }))]);
+  }
+  function howField(x) {
+    if (x.custom) { var c = state.customs[Number(x.key.slice(1))]; return howInput(x.key, c); }
+    return howInput(x.key, item(x.key));
+  }
+  // 「今どうしているか」はトップ3の欄で書く（入力中に順位の欄を作り直さないよう、フォーカスを保つ）
+  function howInput(key, it) {
+    var id = 'how-' + key, inp = h('input', { type: 'text', id: id, maxlength: 80, autocomplete: 'off', placeholder: '例: LINEで1件ずつ返しています' });
+    inp.value = it.how || '';
+    inp.addEventListener('input', function () { it.how = inp.value; update(false, id); });
+    return h('div', null, [h('label', { class: 'f', for: id, text: '今どうしているか（任意・40字まで）' }), inp, h('p', { class: 'errmsg', id: 'he-' + key, role: 'alert' })]);
+  }
+  function rankItem(x, no) {
+    return h('li', null, [
+      h('div', { class: 'rt' }, [h('span', { class: 'no', text: no ? no + '位' : '・' }), h('span', { class: 'nm', text: x.name }), h('span', { class: 'tm', text: TI.weekText(x.min) })]),
+      x.heavy ? h('span', { class: 'hv', text: '気が重い' }) : null,
+      no ? howField(x) : null,
+      toolList(x)
+    ]);
+  }
+  var lastSig = '';
+  function update(noSave, keepFocusId) {
+    if (noSave !== true) writeStore();
+    var a = TI.analyze(state);
+    // 行ごとの表示
+    Object.keys(rowRefs).forEach(function (k) {
+      var r = rowRefs[k], min = TI.minutes(r.it);
+      r.li.classList.toggle('on', min > 0);
+      r.wk.textContent = min > 0 ? TI.weekText(min) : (r.it.freq || r.it.dur ? '回数と時間の両方を選んでください' : '');
+      var e = $('er-' + k); if (e) e.textContent = a.errs[k] && !/今どうしているか/.test(a.errs[k]) ? a.errs[k] : '';
+      if (r.input) r.input.classList.toggle('bad', !!(a.errs[k] && !/今どうしているか/.test(a.errs[k])));
+    });
+    $('waiting').hidden = !!a.top.length;
+    $('outBody').hidden = !a.top.length;
+    // 順位の欄は、並び・名前・時間が変わったときだけ作り直す（「今どうしているか」の入力中に消えないように）
+    var sig = JSON.stringify([a.top, a.heavyOthers].map(function (l) { return l.map(function (x) { return [x.key, x.name, x.min, x.heavy]; }); }));
+    if (sig !== lastSig || !keepFocusId) {
+      var active = document.activeElement && document.activeElement.id;
+      var rk = $('rank'); rk.textContent = '';
+      a.top.forEach(function (x, i) { rk.appendChild(rankItem(x, i + 1)); });
+      var hl = $('heavyList'); hl.textContent = '';
+      a.heavyOthers.forEach(function (x) { hl.appendChild(rankItem(x, 0)); });
+      $('heavySec').hidden = !a.heavyOthers.length;
+      lastSig = sig;
+      if (active && /^how-/.test(active) && $(active)) { var el = $(active), v = el.value.length; el.focus(); try { el.setSelectionRange(v, v); } catch (e) { } }
+    }
+    a.top.forEach(function (x) {
+      var e = $('he-' + x.key), msg = a.errs[x.key] && /今どうしているか/.test(a.errs[x.key]) ? a.errs[x.key] : '';
+      if (e) e.textContent = msg;
+      var inp = $('how-' + x.key); if (inp) inp.classList.toggle('bad', !!msg);
+    });
+    var t = TI.consultText(a), ta = $('consult');
+    if (ta.value !== t) { ta.value = t; $('copyMsg').textContent = ''; $('formMsg').textContent = ''; }
+    fitHeight(ta);
+  }
+  function fitHeight(ta) { if (ta.offsetParent) { ta.style.height = 'auto'; ta.style.height = (ta.scrollHeight + 4) + 'px'; } }
+
+  /* ---- コピー・共有・フォーム ---- */
+  function copyText(text, done) {
+    function fallback() {
+      var ok = false;
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = text; ta.setAttribute('readonly', '');
+        ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;font-size:16px';
+        document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, text.length);
+        ok = document.execCommand('copy'); document.body.removeChild(ta);
+      } catch (e) { ok = false; }
+      done(ok);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try { navigator.clipboard.writeText(text).then(function () { done(true); }, fallback); } catch (e) { fallback(); }
+    } else fallback();
+  }
+  $('copyBtn').addEventListener('click', function () {
+    var ta = $('consult'), msg = $('copyMsg');
+    copyText(ta.value, function (ok) {
+      if (ok) msg.textContent = 'コピーしました。';
+      else { msg.textContent = 'コピーできませんでした。上の文を長押しして、コピーしてください。'; try { ta.focus(); ta.select(); } catch (e) { } }
+    });
+  });
+  $('shareBtn').hidden = typeof navigator.share !== 'function';
+  $('shareBtn').addEventListener('click', function () {
+    var p;
+    try { p = navigator.share({ text: $('consult').value }); } catch (e) { $('copyMsg').textContent = '共有できませんでした。コピーしてお使いください。'; return; }
+    if (p && p.catch) p.catch(function (e) { if (!e || e.name !== 'AbortError') $('copyMsg').textContent = '共有できませんでした。コピーしてお使いください。'; });
+  });
+  // フォームのリンクは、相談の文をURLに載せない。コピーしてから、リンクの既定の動き（新しいタブで開く）にまかせる
+  $('formBtn').addEventListener('click', function () {
+    var msg = $('formMsg');
+    copyText($('consult').value, function (ok) {
+      msg.textContent = ok ? '相談の文をコピーしました。開いたフォームに貼り付けてください。' : 'コピーできませんでした。相談の文を長押しでコピーしてから、フォームに貼り付けてください。';
+    });
+  });
+
+  /* ---- 別のタブで下書きが変わったら読み直す（書き戻さない） ---- */
+  window.addEventListener('storage', function (e) {
+    if (e.key !== TI.KEY || e.newValue == null) return;
+    if (e.newValue === TI.dumpState(state)) return;
+    var st = TI.loadState(e.newValue); if (st) setAll(st, true);
+  });
+
+  renderInds(); renderTasks(); noteStore(); update(true);
+  window.TIUI = { state: function () { return state; }, setAll: setAll, update: update, useSample: useSample };
+})();
+</script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js"
+        data-cf-beacon='{"token": "b4c9f7e78daf4edb84ef52b88633f649"}'></script>
+</body>
+</html>
